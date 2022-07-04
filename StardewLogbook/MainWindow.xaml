@@ -14,16 +14,26 @@
         TextOptions.TextRenderingMode="Auto"        
         Background="{DynamicResource MaterialDesignPaper}"
         FontFamily="{DynamicResource MaterialDesignFont}"
-        Title="MainWindow" Height="450" Width="800">
+        Title="Stardew Valley Logbook - Wiki Crawler" Height="450" Width="800"
+        x:Name="wndMain" Closing="wndMain_Closing">
+    <Window.Resources>
+        <Style x:Key="searchTermStyle" TargetType="{x:Type ListViewItem}">
+            <EventSetter Event="MouseDoubleClick" Handler="SearchTermDoubleClick" />
+        </Style>
+    </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="65*"/>
             <ColumnDefinition Width="35*"/>
         </Grid.ColumnDefinitions>
-        <!-- Column 1 -->
-        <wv2:WebView2 x:Name="webView" Source="https://stardewvalleywiki.com/" />
-        <GridSplitter ResizeDirection="Columns" Grid.Column="0" Height="Auto" Width="8" HorizontalAlignment="Right" VerticalAlignment="Stretch" Margin="0"/>
-        <!-- Column 2 -->
+        <Grid.RowDefinitions>
+            <RowDefinition Height="40*"/>
+            <RowDefinition Height="60*"/>
+        </Grid.RowDefinitions>
+        <!-- Column 1, All Rows -->
+        <wv2:WebView2 x:Name="webView" Source="https://stardewvalleywiki.com/" Grid.Column="0" Grid.RowSpan="4" />
+        <GridSplitter ResizeDirection="Columns" Grid.Column="0" Height="Auto" Width="8" HorizontalAlignment="Right" VerticalAlignment="Stretch" Margin="0" Grid.RowSpan="4" />
+        <!-- Column 2, Row 1 -->
         <StackPanel Orientation="Vertical" Grid.Column="1">
             <materialDesign:Card Height="40" Padding="3" Margin="3">
                 <materialDesign:Card.Content>
@@ -34,7 +44,13 @@
                     </StackPanel>
                 </materialDesign:Card.Content>
             </materialDesign:Card>
-            <TextBox x:Name="txtSearch" materialDesign:HintAssist.Hint="Search Term" Margin="5,10,5,0" KeyDown="txtSearch_KeyDown"/>
+            <TextBox x:Name="txtSearch" materialDesign:HintAssist.Hint="Search Term" Margin="5,10,5,0" KeyDown="txtSearch_KeyDown"/>            
         </StackPanel>
+        <GridSplitter ResizeDirection="Rows" Grid.Column="1" Grid.Row="0" Height="8" Width="Auto" HorizontalAlignment="Stretch" VerticalAlignment="Bottom"/>
+        <!-- Column 2, Row 2 -->
+        <ListView x:Name="lstvHistory" Grid.Row="1" Grid.Column="1" Height="Auto" Width="Auto"
+                  ItemsSource="{Binding ElementName=wndMain, Path=SearchHistory, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                  PreviewKeyDown="lstvHistory_PreviewKeyDown"
+                  ItemContainerStyle="{StaticResource searchTermStyle}"/>
     </Grid>
 </Window>
