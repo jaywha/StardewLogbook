@@ -15,40 +15,54 @@ namespace StardewLogbook.Controllers
             = "mongodb+srv://gcadmin:groovy4all@rhythm-gnome-db.5tddy.mongodb.net/test?authSource=admin&replicaSet=atlas-ehyha0-shard-0&readPreference=primary&ssl=true";
         private static MongoClient Client;
         private static string Owner;
+        private static string DBName;
+        private static string DBCollection;
 
-        public static void Init(string conn_string = MONGODB_CONNECTION_STRING, string owner = "DEFAULT") {
+        public static void Init(string conn_string = MONGODB_CONNECTION_STRING, string owner = "DEFAULT",
+            string db_name = "Rabren-Home-DB", string collection_name = "stardew_search_history") {
             Client = new MongoClient(conn_string);
             Owner = owner;
+            DBName = db_name;
+            DBCollection = collection_name;
         }
 
-        public static IEnumerable<SearchTerm> Read(string db_name, string collection_name)
+        public static List<SearchTerm> Read() => Client
+            .GetDatabase(DBName)
+            .GetCollection<SearchTerm>(DBCollection)
+            .Find(term => term.Owner == Owner)
+            .ToList();
+
+
+        public static void Write(SearchTerm record)
         {
-            var results = Client
-                .GetDatabase(db_name)
-                .GetCollection<SearchTerm>(collection_name)
-                .Find(term => term.Owner == Owner)
-                .ToList();
-
-            foreach (var result in results)
-            {
-                yield return result;
-            }
+            Client
+                .GetDatabase(DBName)
+                .GetCollection<SearchTerm>(DBCollection)
+                .ReplaceOne(
+                    filter: x => x.Id.Equals(record!.Id),
+                    replacement: record!,
+                    options: new ReplaceOptions()
+                    {
+                        IsUpsert = true
+                    }
+                );
         }
 
-        public static void Write(string db_name, string collection_name, List<SearchTerm> records) {
+        public static void Delete(SearchTerm record)
+        {
+            Client
+                .GetDatabase(DBName)
+                .GetCollection<SearchTerm>(DBCollection)
+                .DeleteOne(
+                    filter: x => x.Id.Equals(record!.Id)
+                );
+        }
+
+        public static void WriteAll(List<SearchTerm> records)
+        {
             foreach (var record in records)
             {
-                Client
-                    .GetDatabase(db_name)
-                    .GetCollection<SearchTerm>(collection_name)
-                    .ReplaceOne(
-                        filter: x => x.Id.Equals(record!.Id),
-                        replacement: record!,
-                        options: new ReplaceOptions()
-                        {
-                            IsUpsert = true
-                        }
-                    );
+                Write(record);
             }
         }
     }

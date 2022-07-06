@@ -24,5 +24,7 @@ namespace StardewLogbook.Models
 
         [BsonElement("timestamp")]
         public DateTime Timestamp { get; set; }
+
+        public override string ToString() => $"{(TermType == SearchTermTypes.Script ? "🔧" : "💬")}: {Content}";
     }
 }

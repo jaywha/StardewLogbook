@@ -15,7 +15,7 @@
         Background="{DynamicResource MaterialDesignPaper}"
         FontFamily="{DynamicResource MaterialDesignFont}"
         Title="Stardew Valley Logbook - Wiki Crawler" Height="450" Width="800"
-        x:Name="wndMain" Closing="wndMain_Closing">
+        x:Name="wndMain" Loaded="wndMain_Loaded" Closed="wndMain_Closed">
     <Window.Resources>
         <Style x:Key="searchTermStyle" TargetType="{x:Type ListViewItem}">
             <EventSetter Event="MouseDoubleClick" Handler="SearchTermDoubleClick" />

@@ -1,4 +1,5 @@
-﻿using StardewLogbook.Controllers;
+﻿using MongoDB.Bson;
+using StardewLogbook.Controllers;
 using StardewLogbook.Models;
 using System;
 using System.Collections.Generic;
@@ -34,8 +35,9 @@ namespace StardewLogbook
         private void OnPropertyChanged([CallerMemberName] string prop = "")
             => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(prop));
 
-        private ObservableCollection<string> _searchHistory = new ObservableCollection<string>();
-        public ObservableCollection<string> SearchHistory
+        private List<ObjectId> _searchHistoryIds = new();
+        private ObservableCollection<SearchTerm> _searchHistory = new ObservableCollection<SearchTerm>();
+        public ObservableCollection<SearchTerm> SearchHistory
         {
             get => _searchHistory;
             set {
@@ -50,10 +52,9 @@ namespace StardewLogbook
 
             HIST_OWNER = $"{Environment.MachineName}\\{Environment.UserName}";
             MongoDBController.Init(owner: HIST_OWNER);
-            foreach (var term in MongoDBController.Read("Rabren-Home-DB", "stardew_search_history")) {
-                SearchHistory.Add(term.Content);
-            }
         }
+
+
 
         private void txtSearch_KeyDown(object sender, KeyEventArgs e)
         {
@@ -67,7 +68,14 @@ namespace StardewLogbook
                     _ = webView.CoreWebView2.ExecuteScriptAsync($"alert('You are not safe, try an https link')");
                     if ((sender as string) != RECALL_HISTORY_KEYWORD)
                     {
-                        SearchHistory.Add($"🔧 Script: {searchTerm}");
+                        SearchHistory.Add(new()
+                        {
+                            Id = ObjectId.GenerateNewId(),
+                            Content = searchTerm,
+                            Owner = HIST_OWNER,
+                            TermType = SearchTermTypes.Script,
+                            Timestamp = DateTime.UtcNow
+                        });
                     }
 
                     return;
@@ -80,38 +88,31 @@ namespace StardewLogbook
                     string[] terms = tokens[1..];
                     searchTerm = firstTerm;
                     foreach (string term in terms) {
-                        searchTerm += $"_{term.Substring(0, 1).ToUpper()}{term[1..]}";
+                        searchTerm += $"_{term[..1].ToUpper()}{term[1..]}";
                     }
                 }
 
                 webView.CoreWebView2.Navigate(BASE_URL + searchTerm);
                 if ((sender as string) != RECALL_HISTORY_KEYWORD)
                 {
-                    SearchHistory.Add($"💬 Search: {searchTerm}");
+                    SearchHistory.Add(new()
+                    {
+                        Id = ObjectId.GenerateNewId(),
+                        Content = searchTerm,
+                        Owner = HIST_OWNER,
+                        TermType = SearchTermTypes.General,
+                        Timestamp = DateTime.UtcNow
+                    });
                 }
             }
         }
 
         protected void SearchTermDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            string term = ((ListViewItem)sender).Content as string;
-            txtSearch.Text = term.Split(":")[1].Trim();
+            var term = ((ListViewItem)sender).Content as SearchTerm;
+            txtSearch.Text = term.Content;
             txtSearch.Focus();
             txtSearch_KeyDown(RECALL_HISTORY_KEYWORD, null);
-        }
-
-        private void wndMain_Closing(object sender, CancelEventArgs e)
-        {
-            var terms = new List<SearchTerm>();
-            foreach(var term in SearchHistory) {
-                terms.Add(new(){
-                    TermType = term.StartsWith("🔧") ? SearchTermTypes.Script : SearchTermTypes.General,
-                    Content = term,
-                    Owner = HIST_OWNER,
-                    Timestamp = DateTime.UtcNow
-                });
-            }
-            MongoDBController.Write("Rabren-Home-DB", "stardew_search_history", terms);
         }
 
         private void lstvHistory_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -121,8 +122,26 @@ namespace StardewLogbook
 
             if (e.Key == Key.Delete)
             {
+                var term = SearchHistory[termIndex];
                 SearchHistory.RemoveAt(termIndex);
+                MongoDBController.Delete(term);
             }
+        }
+
+        private async void wndMain_Loaded(object sender, RoutedEventArgs e)
+        {
+            await Dispatcher.InvokeAsync(() =>
+            {
+                foreach (var term in MongoDBController.Read())
+                {
+                    SearchHistory.Add(term);
+                }
+            });
+        }
+
+        private void wndMain_Closed(object sender, EventArgs e)
+        {
+            MongoDBController.WriteAll(SearchHistory.ToList());
         }
     }
 }
