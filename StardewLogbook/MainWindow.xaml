@@ -31,7 +31,15 @@
             <RowDefinition Height="60*"/>
         </Grid.RowDefinitions>
         <!-- Column 1, All Rows -->
-        <wv2:WebView2 x:Name="webView" Source="https://stardewvalleywiki.com/" Grid.Column="0" Grid.RowSpan="4" />
+        <TabControl x:Name="tbctrlTabs" Style="{StaticResource MaterialDesignTabControl}" Grid.Column="0" Grid.RowSpan="4"
+                    TabStripPlacement="Top">
+            <TabItem Header="Wiki" Foreground="White" FontSize="32" IsSelected="True">
+                <wv2:WebView2 x:Name="webView" Source="https://stardewvalleywiki.com/" />
+            </TabItem>
+            <TabItem Header="Collections" Foreground="White" FontSize="32">
+                <wv2:WebView2 x:Name="collectionsView" Source="https://stardewvalleywiki.com/Collections" />
+            </TabItem>
+        </TabControl>
         <GridSplitter ResizeDirection="Columns" Grid.Column="0" Height="Auto" Width="8" HorizontalAlignment="Right" VerticalAlignment="Stretch" Margin="0" Grid.RowSpan="4" />
         <!-- Column 2, Row 1 -->
         <StackPanel Orientation="Vertical" Grid.Column="1">

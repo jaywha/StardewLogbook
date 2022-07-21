@@ -25,4 +25,8 @@
     <PackageReference Include="ShowMeTheXAML" Version="2.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="UserControls\" />
+  </ItemGroup>
+
 </Project>

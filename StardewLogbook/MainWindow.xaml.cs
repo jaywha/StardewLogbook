@@ -34,8 +34,7 @@ namespace StardewLogbook
         public event PropertyChangedEventHandler PropertyChanged;
         private void OnPropertyChanged([CallerMemberName] string prop = "")
             => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(prop));
-
-        private List<ObjectId> _searchHistoryIds = new();
+        
         private ObservableCollection<SearchTerm> _searchHistory = new ObservableCollection<SearchTerm>();
         public ObservableCollection<SearchTerm> SearchHistory
         {
@@ -52,6 +51,7 @@ namespace StardewLogbook
 
             HIST_OWNER = $"{Environment.MachineName}\\{Environment.UserName}";
             MongoDBController.Init(owner: HIST_OWNER);
+            collectionsView.ExecuteScriptAsync("");
         }
 
 
